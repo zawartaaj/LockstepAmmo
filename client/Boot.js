@@ -8,9 +8,10 @@ class Boot extends Object {
       "shared/Base/Base.js",
       "shared/Base/Type.js",
 
-      "shared/libs/Ammo/ammo.js",
+      "shared/libs/Ammo/AmmoFormatted.js",
       //"shared/libs/CubicVR/CubicVR.js",
-      "shared/libs/CubicVR/CubicVR.min.js",
+      "shared/libs/CubicVR/CubicVR_formatted.js",
+      //"shared/libs/CubicVR/CubicVR.min.js",
 
       "shared/WebSockets/WebSocket-helpers.js",
       "shared/WebSockets/WsConnection.js",
@@ -34,7 +35,6 @@ class Boot extends Object {
 
       "client/Vector.js",
       "client/SimHash-helpers.js",
-      "client/Thing.js",
       "client/View.js",
       "client/BallView.js",
       "client/user/User.js",

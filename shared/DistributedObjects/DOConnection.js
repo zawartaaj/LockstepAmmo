@@ -258,6 +258,10 @@
 
     unserializedValue (aString) {
         const json = JSON.parse(aString)
+        return this.unserializeJson(json)
+    }
+
+    unserializeJson (json) {
         const value = Object.valueFromJson(json, new Set(), this)
         return value
     }
@@ -265,8 +269,8 @@
     // --- testing ---
 
     static selfTest () {
-        const ro = DOConnection.clone()
-        ro.proxy().foo(1, 2, "three")
+        const con = DOConnection.clone()
+        con.proxy().foo(1, 2, "three")
     }
 
 }.initThisClass());

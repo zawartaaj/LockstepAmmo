@@ -5,9 +5,9 @@ var Module = { TOTAL_MEMORY: 512 * 1024 * 1024 };
 (class PhysicsEngine extends Base { 
 
   static load (doneCallback) {
-    console.log("loading Ammo")
+    //console.log("loading Ammo")
     Ammo().then((Ammo) => { 
-      console.log("loaded Ammo")
+      //console.log("loaded Ammo")
       getGlobalThis().Ammo = Ammo
       doneCallback()
     });
@@ -19,20 +19,21 @@ var Module = { TOTAL_MEMORY: 512 * 1024 * 1024 };
     this.newSlot("overlappingPairCache", null)
     this.newSlot("solver", null)
     this.newSlot("dynamicsWorld", null)
-    this.newSlot("transform", null)
-    this.newSlot("quaternion", null)
+    this.newSlot("tmpTransform", null)
+    this.newSlot("tmpQuaternion", null)
+    //this.newSlot("tmpEuler", null)
     this.newSlot("isPaused", false)
   }
 
   init () {
     super.init()
-    this.setTransform(new Ammo.btTransform()); // taking this out of readBulletObject reduces the leaking
+    //this.setTmpEuler(new Ammo.btEuler())
+    this.setTmpTransform(new Ammo.btTransform());
+    this.setTmpQuaternion(new Ammo.btQuaternion());
   }
 
   setup () {
-    console.log(this.type() + ".setup()")
-
-    this.setupQuaternion()
+    //console.log(this.type() + ".setup()")
 
     this.setCollisionConfiguration(new Ammo.btDefaultCollisionConfiguration());
     this.setDispatcher(new Ammo.btCollisionDispatcher(this.collisionConfiguration()));
@@ -50,10 +51,6 @@ var Module = { TOTAL_MEMORY: 512 * 1024 * 1024 };
     return this
   }
 
-  setupQuaternion () {
-    const quaternion = new CubicVR.Quaternion;
-    this.setQuaternion(quaternion)
-  }
 
   destroy () {
     Ammo.destroy(this.collisionConfiguration())
@@ -61,7 +58,8 @@ var Module = { TOTAL_MEMORY: 512 * 1024 * 1024 };
     Ammo.destroy(this.overlappingPairCache())
     Ammo.destroy(this.solver())
     Ammo.destroy(this.dynamicsWorld())
-    Ammo.destroy(this.transform())
+    Ammo.destroy(this.tmpTransform())
+    Ammo.destroy(this.tmpQuaternion())
   }
 
   simulate (dt) {

@@ -120,5 +120,38 @@
         return this
     }
 
+    // --- copying ---
+
+    copySerializableSlotsFrom (obj) {
+        this.serializableSlotNamesSet().forEach(slotName => {
+            this.copySerializableSlotFrom(slotName, obj)
+        })
+    }
+
+    copySerializableSlotFrom (slotName, obj) {
+        const privateName = "_" + slotName
+        assert(Reflect.has(this, privateName)) 
+        assert(Reflect.has(obj, privateName)) 
+        const oldValue = this[privateName]
+        const newValue = obj[privateName]
+        this[privateName] = newValue
+
+        /*
+        const newType = typeof(newValue)
+        if (newType === "string" || newType === "number") {
+            this[privateName] = newValue
+        }
+        */
+        /*
+        if (Reflect.has(newValue, "copySerializableSlotsFrom")) {
+            assert(Reflect.has(oldValue, "copySerializableSlotsFrom"))
+            oldValue.copySerializableSlotsFrom(newValue)
+        } else {
+            this[privateName] = newValue
+        }
+        */
+
+    }
+
 }.initThisClass());
 

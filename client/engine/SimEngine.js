@@ -1,6 +1,6 @@
 "use strick";
 
-(class SimEngine extends Base {
+(class SimEngine extends Serializable {
 
   static load (doneCallback) {
     PhysicsEngine.load(() => { doneCallback() })
@@ -9,7 +9,7 @@
   initPrototype () {
     this.newSlot("app", null)
 
-    this.newSlot("things", null)        
+    this.newSerializableSlot("things", null)        
     this.newSlot("thingsToAdd", null)
     this.newSlot("thingsToRemove", null)
 
@@ -29,10 +29,9 @@
   }
 
   setup () {  
-    console.log(this.type() + ".setup()")
+    //console.log(this.type() + ".setup()")
     this.setPhysicsEngine(PhysicsEngine.clone().setup()) 
     this.setGraphicsEngine(GraphicsEngine.clone().setup().setApp(this)) 
-    this.addGround()
     //this.addBoxThing()
     return this
   }
@@ -108,7 +107,8 @@
 
   addGround () {
     const thing = BoxThing.clone().setSimEngine(this)
-    thing.setTexturePath("client/images/cube3.jpg")
+    thing.setLabel("ground")
+    thing.setTexturePath("client/resources/images/cube3.jpg")
     thing.setMass(0)
     thing.setWidth(10)
     thing.setHeight(0.2)
@@ -119,7 +119,7 @@
   }
     
   mainLoop () {
-    console.log(this.type() + ".mainLoop()")
+    //console.log(this.type() + ".mainLoop()")
 
     CubicVR.MainLoop((timer, gl) => {
       //const dt = timer.getLastUpdateSeconds();
@@ -133,7 +133,7 @@
         this.addBoxThing()
       }
       */
-
+      this.graphicsEngine().render()
     })
   }
 
@@ -141,7 +141,7 @@
     this.processAddQueue()
     this.processRemoveQueue()
     this.timeStepPhysics()
-    this.graphicsEngine().render()
+    //this.graphicsEngine().render()
     
     /*
     if (Math.random() < 0.1) {

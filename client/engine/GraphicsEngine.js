@@ -9,15 +9,16 @@
     this.newSlot("scene", null)
     this.newSlot("light", null)
     this.newSlot("windowResizeCallback", null)
-    //this.newSlot("mouseDownCallback", null)
+    this.newSlot("tmpQuaternion", null)
   }
 
   init () {
     super.init()
+    this.setTmpQuaternion(new CubicVR.Quaternion)
   }
 
   setup () {  
-    console.log(this.type() + ".setup()")
+    //console.log(this.type() + ".setup()")
     this.setupCanvas()
     this.setupScene() 
     this.setupLight()
@@ -46,7 +47,7 @@
     canvas.style.display = "block"
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    console.log("canvas " + canvas.width + "x" + canvas.height)
+    //console.log("canvas " + canvas.width + "x" + canvas.height)
   }
 
   setupScene () {

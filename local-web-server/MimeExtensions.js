@@ -841,6 +841,7 @@
 			".zirz": "application/vnd.zul",
 			".zmm": "application/vnd.handheld-entertainment+xml",
 
+			".wasm": "application/octet-stream",
 			".woff2": "font/woff2",
 			".woff": "font/woff",
 		}

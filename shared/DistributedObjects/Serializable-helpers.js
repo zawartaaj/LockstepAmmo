@@ -211,6 +211,14 @@ Object.defineSlot(Set.prototype, "description",
     }
 );
 
+// --- Object ---
+
+Object.defineSlot(Object.prototype, "asJson",
+    function (loopCheck, refCreator) {
+        assert(this.constructor === Object)
+        return this
+    }
+);
 
 // --- String ---
 

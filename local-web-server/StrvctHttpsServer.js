@@ -4,7 +4,6 @@ require("./getGlobalThis.js")
 require("./Base.js")
 require("./StrvctHttpsServerRequest.js")
 
-const http = require('http');
 const https = require('https');
 const fs = require('fs');
 //var vm = require('vm')
@@ -17,7 +16,6 @@ const nodePath = require('path');
 		this.newSlot("server", null);
 		this.newSlot("hostname", "localhost");
 		this.newSlot("port", 8000);
-		this.newSlot("isSecure", false);
 	}
 
 	init () {
@@ -40,10 +38,6 @@ const nodePath = require('path');
 		}
 	}
 
-	scheme () {
-		return this.isSecure() ? "https" : "http";
-	}
-
 	run () {
 		/*
 		require("../source/boot/ResourceManager.js")
@@ -51,23 +45,16 @@ const nodePath = require('path');
 		//vm.runInThisContext(fs.readFileSync(__dirname + "/../source/boot/ResourceManager.js"))
 		*/
 
-		if (this.isSecure()) {
-			this._server = https.createServer(this.options(), (request, response) => { 
-				this.onRequest(request, response) 
-			})
-		} else {
-			this._server = http.createServer({}, (request, response) => { 
-				this.onRequest(request, response) 
-			})	
-		}
-
+		this._server = https.createServer(this.options(), (request, response) => { 
+			this.onRequest(request, response) 
+		})
 		this._server.listen(this.port());
 
 		const sandboxPath =  process.cwd()
 		console.log(this.type() + ":")
 		console.log("  cwd: '" + sandboxPath + "'")
 		console.log("  port: " + this.port())
-		console.log("  url: " + this.scheme() + "://" + this.hostname() + ":" + this.port() + "/index.html")
+		console.log("  url: " + "https://" + this.hostname() + ":" + this.port() + "/index.html")
 	}
 
 	onRequest (request, response) {

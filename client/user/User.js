@@ -6,16 +6,17 @@
 
 */
 
-(class User extends Base {
+(class User extends Serializable {
     initPrototype () {
         this.newSlot("world", null)
         this.newSlot("client", null)
         this.newSlot("userPointer", null)
         this.newSlot("actions", null)
         this.newSlot("actionGroup", null)
+        this.newSerializableSlot("id", "?") 
         this.newSlot("actionGroups", null)
-        this.newSlot("actionOffset", 2) // offset between syncTick actions were sent on, and syncTick they are applied to
         this.newSlot("joinedAtSyncTick", 0) // so we know when it's possible to have input (can't have input prior to joining)
+        this.newSlot("hasState", false) // so we know when we can start sending it actions
     }
 
     init () {
@@ -25,29 +26,24 @@
         this.setActionGroups(new Map())
     }
 
-    id () {
-        return this.client() ? this.client().distantObjectForProxy().remoteId() : "?"
+    isLocal () {
+        return this.world().localUser() === this
     }
 
     shortId () {
         const s = this.id()
-        return s.slice(s.length - 3)
+        const short = s.slice(s.length - 3)
+        const tag = this.isLocal() ? "local" : ""
+        return tag + "usr" + short
     }
 
     getName () {
-        /*
-        const hashName = window.location.hash
-        if (hashName) {
-            return hashName
-        }
-        */
-
-        const clientIdName = this.id().split("_")[1].substring(0, 3)
-        return clientIdName
+        return this.id().split("_")[1].substring(0, 3)
     }
 
     setClient (aClient) {
         this._client = aClient
+        this.setId(aClient.distantObjectForProxy().remoteId())
 
         this.userPointer().view().setName(this.getName())
         return this
@@ -64,14 +60,20 @@
 
     // --- actions groups ---
 
+    
     deleteOldActionGroups () {
-        const t = this.world().syncTick() - this.actionOffset() - 5
-        this.actionGroups().delete(t)
+        const t = this.world().syncTick() - this.world().actionOffset() - 2
+        const ags = this.actionGroups()
+        const ag = ags.get(t)
+        if (ag) {
+            this.debugLog("-- deleted " + ag.shortId() + " ")
+            this.actionGroups().delete(t)
+        }
     }
-
+    
     /*
-    clearOldActioGroups () {
-        const old = this.world().syncTick() - this.actionOffset() - 1
+    deleteOldActionGroups () {
+        const old = this.world().syncTick() - this.world().actionOffset() - 1
         const map = this.actionGroups()
         Array.from(map.keys()).forEach(key => {
             if (key < old) {
@@ -80,13 +82,6 @@
         })
     }
     */
-
-    receiveActionGroup (ag) {
-        const t = ag.syncTick()
-        assert(!this.actionGroups().has(t))
-        this.actionGroups().set(t, ag)
-        return this
-    }
 
     actionGroupForTick (tick) {
         return this.actionGroups().get(tick)
@@ -100,29 +95,52 @@
         ag.setHash(hash)
         ag.setActions(this.actions())
         this.setActions([])
-        this.receiveActionGroup(ag)
-        return this
+        return ag
+    }
+
+    currentSendActionGroup () {
+        const t = this.world().syncTick()
+        return this.actionGroupForTick(t)
     }
 
     sendActionGroup () {
         //  We send T action group but will apply (T - actionOffset) actionGroup
-        this.prepareActionGroup()
-        const ag = this.currentReceiveActionGroup()
-        //console.log("user " + this.shortId() + " sending action group " + this.world().syncTick())
+        const ag = this.prepareActionGroup()
+        this.receiveActionGroup(ag)
+        //this.debugLog(">> sent " + ag.shortId())
+        //const ag = this.currentSendActionGroup()
+        //if (this.world().users().length > 1) {
+        //}
         const rm = RemoteMessage.creationProxy().addActionGroup(ag)
         this.world().channel().asyncRelayMessageFrom(rm, this.client()) //.ignoreResponse()
+        assert (this.actionGroups().has(this.world().syncTick()))
+
+    }
+
+    receiveActionGroup (ag) {
+        if (!this.isLocal()) {
+            this.debugLog("<< received " + ag.shortId())
+        }
+        const t = ag.syncTick()
+        //assert(!this.actionGroups().has(t)) // it might have it after setState
+        if (this.actionGroups().has(t)) {
+      //      debugger;
+        }
+        this.actionGroups().set(t, ag)
+        this.debugLog(this.summary())
+        return this
     }
 
     onNewUserStateRequest (user) {
-        console.log(this.id() + ".onNewUser(" + user.shortId() + ")")
+        this.debugLog(".onNewUser(" + user.shortId() + ")")
         // send any action groups we have
-        //console.log("sending " + this.actionGroups().size + " ag")
+        //this.debugLog("sending " + this.actionGroups().size + " ag")
         this.actionGroups().forEach(ag => {
-            console.log("sending ag " + ag.syncTick() + " for user " + this.shortId() + " to user " + user.shortId())
+            this.debugLog("   >> sending " + ag.shortId() + " to " + user.shortId())
             const rm = RemoteMessage.creationProxy().addActionGroup(ag)
             const future = user.client().asyncReceiveMessage(rm)
             future.setResponseTarget(this)
-            //console.log("future: ", future)
+            //this.debugLog("future: ", future)
         })
         this.sharePosition()
     }
@@ -144,27 +162,31 @@
         return this.currentApplyActionGroup() !== undefined
     }
 
-    currentReceiveActionGroup () {
-        const t = this.world().syncTick()
-        return this.actionGroupForTick(t)
+    currentApplySyncTick () {
+        return this.world().currentApplySyncTick()
     }
 
     currentApplyActionGroup () {
-        const t = this.world().syncTick() - this.actionOffset()
-        return this.actionGroupForTick(t)
+        return this.actionGroupForTick(this.currentApplySyncTick())
     }
 
     canHaveActionGroup () {
-        if (this.world().syncTick() > this.joinedAtSyncTick() + this.actionOffset()) {
+        if (!this.hasState()) {
+            return false
+        }
+
+        if (this.world().syncTick() > this.joinedAtSyncTick() + this.world().actionOffset()) {
             return true
         }
+        return false
     }
 
-    /*
-    hasCurrentReceiveActionGroup () {
-        return this.currentReceiveActionGroup() !== undefined
+    canHaveLocalUserActionGroup () {
+        if (this.world().syncTick() > this.world().localUser().joinedAtSyncTick() + this.world().actionOffset()) {
+            return true
+        }
+        return false
     }
-    */
 
     applyActionGroup () {
         if (!this.world().isRunning()) {
@@ -180,44 +202,33 @@
         assert(ag)
         const hash = this.world().applySimHash()
 
-        if (this.world().syncTick() - this.actionOffset() !== ag.syncTick()) {
-            console.warn("syncTicks don't match " + this.world().syncTick() + " !== " + ag.syncTick())
-            debugger;
-            throw new Error("syncTicks don't match")
-            return
-        }
+        if (this.canHaveLocalUserActionGroup()) {
+            assert(this.currentApplySyncTick() === ag.syncTick())
 
-        if (hash === null) {
-            debugger;
-            console.warn("simHash is null")
-            throw new Error("simHash is null")
-            return
+            if (hash === null || hash === undefined) {
+                console.warn("local simHash is missing (" + hash + ") for syncTick " + ag.syncTick())
+                console.warn("              syncTick:" + this.world().syncTick())
+                console.warn("  currentApplySyncTick:" + this.currentApplySyncTick())
+                console.warn("      joinedAtSyncTick:" + this.joinedAtSyncTick())
+                debugger;
+                this.world().applySimHash()
+                throw new Error("simHash is missing")
+            }
         }
 
         if (hash !== ag.hash()) {
-            console.warn("simHashs don't match local " + hash + " !== other " + ag.hash())
-            //throw new Error("simHashs don't match")
-            //return
+            this.debugLog("ERROR: simHashes don't match on tick " + this.world().syncTick() + " local " + hash + " !== other " + ag.hash())
+            //throw new Error("simHashes don't match")
+          //  debugger;
         }
 
         const actions = ag.actions()
         actions.forEach(rm => rm.sendTo(this))
         this.deleteOldActionGroups()
-        //console.log("currently2 " + this.actionGroups().size + " action groups")
+        this.debugLog("currently " + this.actionGroups().size + " action groups")
     }
 
     // --- mouse down ---
-
-    /*
-    onMouseDown (event) {
-        const thing = Thing.clone()
-        thing.setPosition(this.userPointer().position())
-        thing.pickVelocity()
-        const rm = RemoteMessage.creationProxy().addThingString(JSON.stringify(thing.asJson()))
-        this.addAction(rm)
-        event.stopPropagation()
-    }
-    */
 
     onMouseDown (event) {
         const thing = BoxThing.clone().setSimEngine(this.world().simEngine())
@@ -261,6 +272,18 @@
 
     willDestroy () {
         this.userPointer().willDestroy()
+    }
+
+    debugLog (s) {
+        console.log("t" + this.world().syncTick() + " " + this.type() + " " + s)
+    }
+
+    summary () {
+        let s = " " + this.shortId() + " "
+        s += " joined: " + this.joinedAtSyncTick()
+        s += " canHaveAgs: " + this.canHaveActionGroup()
+        s += " ags: " + JSON.stringify(Array.from(this.actionGroups().keys())) 
+        return s
     }
 
 }.initThisClass());

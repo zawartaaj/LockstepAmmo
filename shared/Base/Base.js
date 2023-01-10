@@ -141,7 +141,8 @@ if (!String.prototype.capitalized) {
     newUuid () { 
         // NEW - not in standard Base
         // TODO: better entropy
-        const n1 = Math.floor(Math.pow(2, 64) * Math.random()).toString(36)
+        const n1 = Math.floor(Math.pow(2, 64) * Math.random() / 1000).toString()
+        //const n1 = Math.floor(Math.pow(2, 64) * Math.random()).toString(36)
         //const n2 = Math.floor(Math.pow(2, 64) * Math.random()).toString(36)
         //return this.type() + "_" + n1 + "" + n2
         return this.type() + "_" + n1 

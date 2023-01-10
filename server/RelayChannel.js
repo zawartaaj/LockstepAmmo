@@ -26,13 +26,19 @@
     }
 
     addClient (aClient) {
-        this.clientsSet().add(aClient)
-        this.clientsSet().forEach(client => client.onChannelDidAddClient(aClient))
+        const cs = this.clientsSet()
+        if (!cs.has(aClient)) {
+            cs.forEach(client => client.onChannelDidAddClient(aClient))
+            cs.add(aClient)
+        }
     }
 
     removeClient (aClient) {
-        this.clientsSet().delete(aClient)
-        this.clientsSet().forEach(client => client.onChannelDidRemoveClient(aClient))
+        const cs = this.clientsSet()
+        if (cs.has(aClient)) {
+            cs.delete(aClient)
+            cs.forEach(client => client.onChannelDidRemoveClient(aClient))
+        }
     }
 
     // --- receive remote message ----

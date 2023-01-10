@@ -7,7 +7,6 @@
 
 */
 
-
 (class View extends Base {
     initPrototype () {
         this.newSlot("element", null)

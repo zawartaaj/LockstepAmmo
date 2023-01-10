@@ -47,7 +47,7 @@
 
     connectToServer () {
         const url = this.url()
-        console.log("connecting to: " + url)
+        this.debugLog("connecting to: " + url)
         const ws = new WebSocket(url);
         this.setWebSocket(ws)
         this.setupWebSocket()

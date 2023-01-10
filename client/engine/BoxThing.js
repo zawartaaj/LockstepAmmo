@@ -3,6 +3,7 @@
 (class BoxThing extends SimThing { 
 
   initPrototype () {
+    this.newSerializableSlot("label", null)
     this.newSerializableSlot("width", 2)
     this.newSerializableSlot("height", 2)
     this.newSerializableSlot("depth", 2)
@@ -101,15 +102,8 @@
     const z = s*(Math.random() - 0.5)*2;
 
     this.setPosXYZ(x, 30 + y, z)
-    /*
-    const rot = body.getWorldTransform().getRotation();
-    rot.setX(Math.random());
-    rot.setY(1);
-    rot.setZ(1);
-    rot.setW(Math.random());
 
-    rot.setEulerZYX(400, 600, 700)
-    */
+    //this.setRotationArray([1, 0, 0, 1])
     return this
   }
 

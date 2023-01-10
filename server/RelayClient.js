@@ -49,7 +49,7 @@
         const channel = this.server().channelNamedCreateIfAbsent(channelName)
         this.channelsSet().add(channel)
         channel.addClient(this)
-        return channel
+        return [channel, channel.clientsSet()] // we return both in order to ensure it has client set before getting msgs from other clients in the channel
     }
 
     onRemoteMessage_asyncRemoveSubscription (channelName) {
